@@ -13,12 +13,12 @@ class GradDescent():
             return step_size
         elif method == "exact":
             t = symbols("t")
-            expr = np.array(self.point) + t * self.get_direction()
+            expr = self.point + t * self.get_direction()
             sub = [(self.vars[i], f) for i, f in enumerate(expr)]
             ft = self.func.subs(sub)
             step = solve(diff(ft, t), t)
             return np.array(step) * (-1)
-        elif method == "backtracking":
+        elif method == "backtrack":
             t = step_size
             while not self.backtrack_condition(t):
                 t = t * self.beta
@@ -38,10 +38,12 @@ class GradDescent():
         else:
             print("Incorrect step method chosen, default to fixed step")
             return step_size
+
     def backtrack_condition(self, t):
         left_side = self.substitution([self.func], (self.point + t * self.get_direction()))
-        right_side = self.substitution([self.func], self.point) + self.alpha * t * np.dot(self.get_direction(), self.get_direction())
-        return left_side < right_side
+        right_side = self.substitution([self.func], self.point) - self.alpha * t * np.dot(self.get_direction(), self.get_direction())
+        return left_side - 0.1 <= right_side
+
     def second_deriv(self, func):
         '''return a list of second partial derivatives given a function with respect to self.vars'''
         partials = [self.partial_diffs(d) for d in self.partial_diffs(self.func)]
@@ -97,6 +99,11 @@ start3 = [b, b]
 f3 = x1**4 + 2*x1**2*x2**2 + x2**4
 p3 = GradDescent(f3, vars1)
 
-p1.take_steps(20, start1, step_size = 1.2, method = "backtracking")
-p2.take_steps(20, start2, step_size = 0.9, method = "newton")
-p3.take_steps(1, start3, step_size = 0.9, method = "newton")
+# p1.take_steps(20, start1, step_size = 1.2, method = "exact")
+# p2.take_steps(20, start2, step_size = 0.9, method = "newton")
+# p3.take_steps(1, start3, step_size = 0.9, method = "newton")
+
+f4 = x1**2 + x2 **2
+start4 = [7, 7]
+p4 = GradDescent(f4, vars1)
+p4.take_steps(50, start4, step_size = 1, method = "backtrack", alpha = 0.5, beta = 0.1)
